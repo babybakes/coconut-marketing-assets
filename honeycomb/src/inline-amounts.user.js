@@ -150,6 +150,17 @@
   function parseIngredient(raw) {
     const s = String(raw).replace(/\s+/g, ' ').trim().replace(/^\(?(?:optional|for (?:the )?\w+)\)?\s*:\s*/i, '');
     const ing = { raw: s, q1: null, q2: null, pkg: null, mod: null, unit: null, size: null, metric: null, name: '' };
+    const zest = s.match(new RegExp(`^(?:(?:finely\\s+)?grated\\s+|fresh\\s+)?(zest|juice)\\s+(?:of|from)\\s+(${SINGLE})\\s+([a-z]+)`, 'i'));
+    if (zest) {
+      const fruit = zest[3].toLowerCase();
+      ing.q1 = parseSingle(zest[2]);
+      ing.unit = { s: fruit, p: fruit + 's' };
+      let rest = s.slice(zest[0].length);
+      const mm = rest.match(/^\s*(\([^)]*\d[^)]*\))/);
+      if (mm) ing.metric = mm[1];
+      ing.name = `${fruit} ${zest[1].toLowerCase()}`;
+      return ing;
+    }
     const m = s.match(QTY_RE);
     let rest = s;
     if (m) {
@@ -173,6 +184,14 @@
       } else if ((mm = rest.match(/^\s*(extra[- ]large|large|medium|small|jumbo)\b/i))) {
         ing.size = mm[1].toLowerCase();
         rest = rest.slice(mm[0].length);
+      }
+      const plus = ing.unit && rest.match(new RegExp(`^\\s*(?:plus|\\+)\\s+(${SINGLE})`, 'i'));
+      if (plus) {
+        const pu = matchUnit(rest.slice(plus[0].length));
+        if (pu) {
+          ing.plus = { q: parseSingle(plus[1]), unit: pu.unit };
+          rest = rest.slice(plus[0].length + pu.len);
+        }
       }
       // "1 and 3/4 cups (219g)": the parenthetical is the same amount in other units
       if ((mm = rest.match(/^\s*(\([^)]*\d[^)]*\))/))) {
@@ -204,6 +223,10 @@
     if (ing.pkg) t += ' ' + ing.pkg;
     if (ing.unit) t += ' ' + (top > 1 ? ing.unit.p : ing.unit.s);
     if (ing.size) t += ' ' + ing.size;
+    if (ing.plus) {
+      const q = ing.plus.q * f;
+      t += ` + ${fmt(q)} ${q > 1 ? ing.plus.unit.p : ing.plus.unit.s}`;
+    }
     if (ing.metric) t += ' ' + scaleParen(ing.metric, f);
     return t;
   }
@@ -595,18 +618,43 @@
     return a || document.body;
   }
 
+  // Menus, sidebars and "trending"/"related" boxes: never part of the recipe.
+  const PAGE_CHROME = 'nav, aside, header, footer, [role="navigation"], [class*="trending" i], [class*="related" i], [class*="sidebar" i], [class*="menu" i]';
+  const region = (el) => el.closest('article, section, main, [class*="story" i], [class*="article" i]') || document.body;
+
   function findRecipeInText() {
     const lines = [];
     for (const el of document.body.querySelectorAll('li, p')) {
       if (el.closest('#inline-amounts-ui') || el.querySelector('li, p')) continue;
+      if (el.closest(PAGE_CHROME)) continue;
       const t = el.textContent.replace(/\s+/g, ' ').trim();
-      if (t.length < 3 || t.length > 160 || !QTY_RE.test(t)) continue;
+      if (t.length < 3 || t.length > 160) continue;
+      if (!QTY_RE.test(t) && !/^(?:(?:finely\s+)?grated\s+|fresh\s+)?(?:zest|juice)\s+(?:of|from)\s+\S*\d/i.test(t)) continue;
       if (/^\s*\d+\s*[.)]\s/.test(t)) continue; // "1. Preheat the oven"
       const ing = parseIngredient(t);
       if (!ing.name || /^[°º]/.test(ing.name)) continue;
       if (!ing.unit && !ing.size && ing.name.split(' ').length > 5) continue;
       lines.push({ el, ing });
     }
+    if (lines.length < 3) return null;
+
+    // News pages have other lines that start with numbers ("2 dead after crash…").
+    // Group lines that sit close together and keep the biggest group: that's the recipe.
+    const blocks = [...document.body.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6')];
+    const pos = new Map(blocks.map((el, i) => [el, i]));
+    const clusters = [];
+    let cur = [];
+    for (const l of lines) {
+      const prev = cur[cur.length - 1];
+      if (prev && (pos.get(l.el) - pos.get(prev.el) > 8 || region(l.el) !== region(prev.el))) {
+        clusters.push(cur);
+        cur = [];
+      }
+      cur.push(l);
+    }
+    clusters.push(cur);
+    lines.length = 0;
+    lines.push(...clusters.reduce((a, b) => (b.length > a.length ? b : a)));
     if (lines.length < 3) return null;
 
     const lastIng = lines[lines.length - 1].el;
@@ -622,7 +670,7 @@
     }
     const lineEls = new Set(lines.map((l) => l.el));
     const steps = [...box.querySelectorAll('li, p')].filter((el) =>
-      FOLLOWS(lastIng, el) && !lineEls.has(el) && !el.querySelector('li, p') &&
+      FOLLOWS(lastIng, el) && !lineEls.has(el) && !el.querySelector('li, p') && !el.closest(PAGE_CHROME) &&
       !el.closest('#inline-amounts-ui') && el.textContent.trim().length >= 25
     ).slice(0, 60);
     if (!steps.length) return null;

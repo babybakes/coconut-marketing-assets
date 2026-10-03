@@ -36,6 +36,17 @@ const cases = {
   },
   'not-a-recipe.html': { pills: 0, noUi: true },
   'top-ten-list.html': { pills: 0, noUi: true },
+  'katu-real.html': {
+    expect: {
+      '#d1': ['milk [1 cup (240ml)]', 'butter [6 Tbsp (85g)]', 'yeast [2¼ tsp (1/4-ounce envelope/7g)]', 'pinch of the sugar.'],
+      '#d2': ['flour [4 cups (480g)]', 'sugar [⅔ cup (133g)]', 'salt [1 tsp]', 'vanilla [1 Tbsp]', 'egg [1 large]', 'vegetable oil [1 tsp]'],
+      '#f1': ['granulated sugar [5 Tbsp]', 'orange zest [½ orange (about 1 teaspoon)]', 'brown sugar [4 Tbsp]',
+        'cinnamon [1 Tbsp]', 'melted butter [¼ cup + 2 Tbsp (85g)]', 'sugar mixture', 'pecans [½ cup (60g)]'],
+      '#g1': ['cream cheese [4 oz (114g)]', 'butter [2 Tbsp]', 'salt [1 pinch]', 'powdered sugar [1½ cups (180g)]',
+        'orange zest [½ orange]', 'orange juice [1 Tbsp]', 'vanilla [1 tsp]'],
+    },
+    scaled2: { '#f1': ['melted butter [½ cup + 4 Tbsp (170g)]', 'orange zest [1 orange (about 2 teaspoon)]'] },
+  },
   'katu-leadins.html': {
     expect: {
       '#d1': ['pinch of the sugar and', 'milk [1 cup (240ml)]', 'yeast [2¼ tsp (1/4-ounce envelope/7g)]'],
