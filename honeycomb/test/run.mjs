@@ -35,6 +35,27 @@ const cases = {
     },
   },
   'not-a-recipe.html': { pills: 0, noUi: true },
+  'top-ten-list.html': { pills: 0, noUi: true },
+  'katu-leadins.html': {
+    expect: {
+      '#d1': ['pinch of the sugar and', 'milk [1 cup (240ml)]', 'yeast [2¼ tsp (1/4-ounce envelope/7g)]'],
+      '#d2': ['flour [4 cups (480g)]', 'sugar [⅔ cup (133g)]', 'salt [1 tsp]', 'butter [6 Tbsp (85g)]',
+        'eggs [2 large]', 'vanilla extract [1 Tbsp]', 'orange zest [1 Tbsp]', 'yeast mixture'],
+      '#f1': ['butter [½ cup (113g)]', 'brown sugar [1 cup (200g)]', 'cinnamon [2 Tbsp]', 'pecans [1 cup (115g)]'],
+      '#g1': ['powdered sugar [2 cups (240g)]', 'orange juice [3 Tbsp]', 'vanilla [1 tsp]'],
+    },
+    scaled2: { '#d1': ['yeast [4½ tsp (½-ounce envelope/14g)]'] },
+  },
+  'katu-headings.html': {
+    expect: {
+      '#d1': ['milk [1 cup (240ml)]', 'yeast [2¼ tsp (1/4-ounce envelope/7g)]'],
+      '#d2': ['flour [4 cups (480g)]', 'sugar [⅔ cup (133g)]', 'salt [1 tsp]', 'butter [6 Tbsp (85g)]',
+        'eggs [2 large]', 'vanilla [1 Tbsp]', 'orange zest [1 Tbsp]', 'yeast mixture'],
+      '#f1': ['butter [½ cup (113g)]', 'brown sugar [1 cup (200g)]', 'cinnamon [2 Tbsp]', 'pecans [1 cup (115g)]'],
+      '#g1': ['powdered sugar [2 cups (240g)]', 'orange juice [3 Tbsp]', 'vanilla [1 tsp]'],
+    },
+    scaled2: { '#d1': ['yeast [4½ tsp (½-ounce envelope/14g)]'] },
+  },
 };
 
 const browser = await chromium.launch();
@@ -65,7 +86,7 @@ for (const [file, c] of Object.entries(cases)) {
     for (const w of wants) if (!t.includes(w)) fail(`${sel} missing "${w}"`);
   }
   if (shots && pillCount) {
-    await page.locator('.tasty-recipes-instructions, .wprm-recipe-instructions, .step-list').first().scrollIntoViewIfNeeded();
+    await page.locator('.tasty-recipes-instructions, .wprm-recipe-instructions, .step-list, #d1').first().scrollIntoViewIfNeeded();
     await page.evaluate(() => window.scrollBy(0, -80));
     await page.screenshot({ path: path.join(dir, '../dist', file.replace('.html', '.png')) });
   }

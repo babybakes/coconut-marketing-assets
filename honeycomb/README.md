@@ -50,7 +50,7 @@ That's the point of Phase 0. Keep a quick list:
 ## Known limits (on purpose, for now)
 
 - "The dry ingredients" and "the wet ingredients" don't get amounts yet.
-- Recipes with no recipe data (Instagram captions, some small blogs) aren't detected.
+- Pages without recipe data (news sites, small blogs) are read from the page text: lists of lines starting with amounts, then the steps after them. Instagram captions still aren't detected.
 - No AI yet; it's all simple text matching.
 
 ## Developing
